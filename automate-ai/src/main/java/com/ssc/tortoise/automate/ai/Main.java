@@ -41,7 +41,7 @@ public class Main {
 		ChatCompletions chatCompletions = client.getChatCompletions(model,
 		    new ChatCompletionsOptions(chatMessages));
 
-		System.out.printf("Model ID=%s is created at %s.%n", chatCompletions.getId(), chatCompletions.getCreatedAt());
+//		System.out.printf("Model ID=%s is created at %s.%n", chatCompletions.getId(), chatCompletions.getCreatedAt());
 		for (ChatChoice choice : chatCompletions.getChoices()) {
 		    ChatMessage message = choice.getMessage();
 		    System.out.printf("Index: %d, Chat Role: %s.%n", choice.getIndex(), message.getRole());
