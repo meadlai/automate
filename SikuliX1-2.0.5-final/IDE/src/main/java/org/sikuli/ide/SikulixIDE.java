@@ -263,11 +263,18 @@ public class SikulixIDE extends JFrame {
     Debug.log(3, "IDE: creating combined work window");
     JPanel codePane = new JPanel(new BorderLayout(10, 10));
     codePane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-    codePane.add(tabs, BorderLayout.CENTER);
+    codePane.add(tabs, BorderLayout.NORTH);
+    //TODO
+    this.initChatTabs();
+    codePane.add(messageArea, BorderLayout.CENTER);
+    JPanel chatPane = new JPanel(new BorderLayout(10, 10));
+    chatPane.add(chatTabs, BorderLayout.CENTER);
     if (prefs.getPrefMoreMessage() == PreferencesUser.VERTICAL) {
-      mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, messageArea, codePane);
+//      mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, messageArea, codePane);
+    	mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, chatPane, codePane);
     } else {
-      mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, messageArea, codePane);
+//      mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, messageArea, codePane);
+    	mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chatPane, codePane);
     }
     mainPane.setResizeWeight(0.6);
     mainPane.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
@@ -303,8 +310,14 @@ public class SikulixIDE extends JFrame {
     if (tabs.getTabCount() == 0) {
       newTabEmpty();
     }
+    
+   
+    
     tabs.setSelectedIndex(0);
-
+    if (chatTabs.getTabCount() == 0) {
+        newTabEmpty();
+    }
+     chatTabs.setSelectedIndex(0);
     new Screen();
     if (Mouse.isNotUseable() && Commons.runningMac()) {
       String link = "https://github.com/RaiMan/SikuliX1/wiki/Allow-SikuliX-actions-on-macOS";
@@ -358,6 +371,64 @@ public class SikulixIDE extends JFrame {
     }
   }
 
+  //TODO init New Chat pane
+  private CloseableTabbedPane chatTabs;
+  private void initChatTabs() {
+	  chatTabs = new CloseableTabbedPane();
+	  chatTabs.setUI(new AquaCloseableTabbedPaneUI());
+	  chatTabs.addCloseableTabbedPaneListener(new CloseableTabbedPaneListener() {
+	      @Override
+	      public boolean closeTab(int tabIndexToClose) {
+	    	  // DONT close chat pane tabs
+//	        EditorPane editorPane;
+//	        try {
+//	          editorPane = getPaneAtIndex(tabIndexToClose);
+//	          tabs.setLastClosed(editorPane.getSourceReference());
+//	          boolean ret = editorPane.close();
+//	          return ret;
+//	        } catch (Exception e) {
+//	          log(-1, "Problem closing tab %d\nError: %s", tabIndexToClose, e.getMessage());
+	          return false;
+//	        }
+	      }
+	    });
+	    tabs.addChangeListener(new ChangeListener() {
+	      @Override
+	      public void stateChanged(javax.swing.event.ChangeEvent e) {
+	        log(4, "********** Tab switched");
+	        EditorPane editorPane;
+	        JTabbedPane tab = (JTabbedPane) e.getSource();
+	        int i = tab.getSelectedIndex();
+	        if (i >= 0) {
+	          editorPane = getPaneAtIndex(i);
+	          if (!editorPane.hasEditingFile()) {
+	            return;
+	          }
+	          if (editorPane.isTemp()) {
+	            setTitle(tab.getTitleAt(i));
+	          } else {
+	            if (editorPane.isBundle()) {
+	              setTitle(editorPane.getFolderPath());
+	            } else {
+	              setTitle(editorPane.getFilePath());
+	            }
+	          }
+	          editorPane.setBundleFolder();
+	          int dot = editorPane.getCaret().getDot();
+	          editorPane.setCaretPosition(dot);
+	          if (editorPane.isText()) {
+	            collapseMessageArea();
+	          } else {
+	            uncollapseMessageArea();
+	          }
+	          chkShowThumbs.setState(getCurrentCodePane().showThumbs);
+	          getStatusbar().setType(getCurrentCodePane().getType());
+	        }
+	        updateUndoRedoStates();
+	      }
+	    });
+	  }
+  
   private void initTabs() {
     tabs = new CloseableTabbedPane();
     tabs.setUI(new AquaCloseableTabbedPaneUI());
@@ -644,6 +715,8 @@ public class SikulixIDE extends JFrame {
     editorPane.updateDocumentListeners("empty tab");
     tabs.addTab(_I("tabUntitled"), editorPane.getScrollPane(), 0);
     tabs.setSelectedIndex(0);
+    chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
+    chatTabs.setSelectedIndex(0);
     return true;
   }
 
@@ -2606,7 +2679,7 @@ public class SikulixIDE extends JFrame {
     messageArea = new JTabbedPane();
     messages = new EditorConsolePane();
     chatMessages = new EditorConsolePane();
-    messageArea.addTab(_I("paneMessage2"), null, chatMessages, "DoubleClick to hide/unhide");
+//    messageArea.addTab(_I("paneMessage2"), null, chatMessages, "DoubleClick to hide/unhide");
     messageArea.addTab(_I("paneMessage"), null, messages, "DoubleClick to hide/unhide");
     if (Settings.isWindows() || Settings.isLinux()) {
       messageArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
