@@ -2,3 +2,8 @@
 /automate-ai/*.iml
 /automate-ai/.idea/
 /.idea/
+**/.classpath
+**/.project
+**/.settings/**
+**/.gitignore
+.gitignore
