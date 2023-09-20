@@ -717,10 +717,36 @@ public class SikulixIDE extends JFrame {
     editorPane.updateDocumentListeners("empty tab");
     tabs.addTab(_I("tabUntitled"), editorPane.getScrollPane(), 0);
     tabs.setSelectedIndex(0);
+    
+    
+    
     chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
     chatTabs.setSelectedIndex(0);
     return true;
   }
+  
+  
+  boolean newChatTabEmpty() {
+	    EditorPane editorPane = makeTab(-1);
+	    editorPane.init(null);
+	    editorPane.setTemp(true);
+	    editorPane.setIsBundle();
+	    IScriptRunner runner = editorPane.getRunner();
+	    String defaultExtension = runner.getDefaultExtension();
+	    File tempFile = FileManager.createTempFile(defaultExtension, new File(RunTime.get().fpBaseTempPath,
+	        "SikulixIDETempChatTab" + editorPane.getID()).getAbsolutePath());
+	    if (null == tempFile) {
+	      //TODO newTabEmpty: temp problem: how should caller react?
+	      return false;
+	    }
+	    editorPane.setFiles(tempFile);
+	    editorPane.updateDocumentListeners("empty tab");
+	    
+	    
+	    chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
+	    chatTabs.setSelectedIndex(0);
+	    return true;
+	  }
 
   String newTabWithContent(String fname) {
     return newTabWithContent(fname, -1);
