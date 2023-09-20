@@ -264,13 +264,22 @@ public class SikulixIDE extends JFrame {
     JPanel codePane = new JPanel(new BorderLayout(10, 10));
     codePane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
     codePane.add(tabs, BorderLayout.NORTH);
-    //TODO
+    //TODO: Jian changed
     this.initChatTabs();
+    initChatConvTabs();
     codePane.add(messageArea, BorderLayout.CENTER);
-    JPanel chatPane = new JPanel(new BorderLayout(10, 10));
-    chatPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
-    chatPane.add(chatArea, BorderLayout.NORTH);
-    chatPane.add(chatTabs, BorderLayout.CENTER);
+//    JPanel chatPane = new JPanel(new BorderLayout(10, 10));
+//    chatPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+//    chatPane.add(chatArea, BorderLayout.NORTH);
+//    chatPane.add(chatTabs, BorderLayout.CENTER);
+    JPanel chatBtnPane = new JPanel();
+    chatBtnPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+    
+    _btnChat = new ButtonChat();
+    chatBtnPane.add(_btnChat);
+    chatActionPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chatTabs, chatBtnPane);
+    chatPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, chatConvTabs, chatActionPane);
+    
     if (prefs.getPrefMoreMessage() == PreferencesUser.VERTICAL) {
 //      mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, messageArea, codePane);
     	mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, chatPane, codePane);
@@ -316,10 +325,16 @@ public class SikulixIDE extends JFrame {
    
     
     tabs.setSelectedIndex(0);
+    //TODO: Jian changed
     if (chatTabs.getTabCount() == 0) {
-        newTabEmpty();
+        newChatTabEmpty(0);
     }
-     chatTabs.setSelectedIndex(0);
+    chatTabs.setSelectedIndex(0);
+    
+    if (chatConvTabs.getTabCount() == 0) {
+    	newChatConvTabEmpty(0);
+    }
+    chatConvTabs.setSelectedIndex(0);
     new Screen();
     if (Mouse.isNotUseable() && Commons.runningMac()) {
       String link = "https://github.com/RaiMan/SikuliX1/wiki/Allow-SikuliX-actions-on-macOS";
@@ -362,6 +377,9 @@ public class SikulixIDE extends JFrame {
   }
 
   private JSplitPane mainPane;
+  //TODO: Jian
+  private JSplitPane chatPane;
+  private JSplitPane chatActionPane;
   static IDESplash ideSplash = null;
   private boolean _inited = false;
 
@@ -379,6 +397,63 @@ public class SikulixIDE extends JFrame {
 	  chatTabs = new CloseableTabbedPane();
 	  chatTabs.setUI(new AquaCloseableTabbedPaneUI());
 	  chatTabs.addCloseableTabbedPaneListener(new CloseableTabbedPaneListener() {
+	      @Override
+	      public boolean closeTab(int tabIndexToClose) {
+	    	  // DONT close chat pane tabs
+//	        EditorPane editorPane;
+//	        try {
+//	          editorPane = getPaneAtIndex(tabIndexToClose);
+//	          tabs.setLastClosed(editorPane.getSourceReference());
+//	          boolean ret = editorPane.close();
+//	          return ret;
+//	        } catch (Exception e) {
+//	          log(-1, "Problem closing tab %d\nError: %s", tabIndexToClose, e.getMessage());
+	          return false;
+//	        }
+	      }
+	    });
+	    tabs.addChangeListener(new ChangeListener() {
+	      @Override
+	      public void stateChanged(javax.swing.event.ChangeEvent e) {
+	        log(4, "********** Tab switched");
+	        EditorPane editorPane;
+	        JTabbedPane tab = (JTabbedPane) e.getSource();
+	        int i = tab.getSelectedIndex();
+	        if (i >= 0) {
+	          editorPane = getPaneAtIndex(i);
+	          if (!editorPane.hasEditingFile()) {
+	            return;
+	          }
+	          if (editorPane.isTemp()) {
+	            setTitle(tab.getTitleAt(i));
+	          } else {
+	            if (editorPane.isBundle()) {
+	              setTitle(editorPane.getFolderPath());
+	            } else {
+	              setTitle(editorPane.getFilePath());
+	            }
+	          }
+	          editorPane.setBundleFolder();
+	          int dot = editorPane.getCaret().getDot();
+	          editorPane.setCaretPosition(dot);
+	          if (editorPane.isText()) {
+	            collapseMessageArea();
+	          } else {
+	            uncollapseMessageArea();
+	          }
+	          chkShowThumbs.setState(getCurrentCodePane().showThumbs);
+	          getStatusbar().setType(getCurrentCodePane().getType());
+	        }
+	        updateUndoRedoStates();
+	      }
+	    });
+	  }
+  
+  private CloseableTabbedPane chatConvTabs;
+  private void initChatConvTabs() {
+	  chatConvTabs = new CloseableTabbedPane();
+	  chatConvTabs.setUI(new AquaCloseableTabbedPaneUI());
+	  chatConvTabs.addCloseableTabbedPaneListener(new CloseableTabbedPaneListener() {
 	      @Override
 	      public boolean closeTab(int tabIndexToClose) {
 	    	  // DONT close chat pane tabs
@@ -718,15 +793,13 @@ public class SikulixIDE extends JFrame {
     tabs.addTab(_I("tabUntitled"), editorPane.getScrollPane(), 0);
     tabs.setSelectedIndex(0);
     
-    
-    
-    chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
-    chatTabs.setSelectedIndex(0);
+//    chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
+//    chatTabs.setSelectedIndex(0);
     return true;
   }
   
   
-  boolean newChatTabEmpty() {
+  boolean newChatTabEmpty(int index) {
 	    EditorPane editorPane = makeTab(-1);
 	    editorPane.init(null);
 	    editorPane.setTemp(true);
@@ -746,7 +819,29 @@ public class SikulixIDE extends JFrame {
 	    chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
 	    chatTabs.setSelectedIndex(0);
 	    return true;
-	  }
+  }
+  
+  boolean newChatConvTabEmpty(int index) {
+	    EditorPane editorPane = makeTab(-1);
+	    editorPane.init(null);
+	    editorPane.setTemp(true);
+	    editorPane.setIsBundle();
+	    IScriptRunner runner = editorPane.getRunner();
+	    String defaultExtension = runner.getDefaultExtension();
+	    File tempFile = FileManager.createTempFile(defaultExtension, new File(RunTime.get().fpBaseTempPath,
+	        "SikulixIDETempChatConvTab" + editorPane.getID()).getAbsolutePath());
+	    if (null == tempFile) {
+	      //TODO newTabEmpty: temp problem: how should caller react?
+	      return false;
+	    }
+	    editorPane.setFiles(tempFile);
+	    editorPane.updateDocumentListeners("empty tab");
+	    
+	    
+	    chatConvTabs.addTab(_I("Chat Conversaction"), editorPane.getScrollPane(), 0);
+	    chatConvTabs.setSelectedIndex(0);
+	    return true;
+}
 
   String newTabWithContent(String fname) {
     return newTabWithContent(fname, -1);
@@ -2147,6 +2242,7 @@ public class SikulixIDE extends JFrame {
   //<editor-fold defaultstate="collapsed" desc="20 Init ToolBar Buttons">
   private ButtonCapture _btnCapture;
   private ButtonRun _btnRun = null, _btnRunViz = null;
+  private ButtonChat _btnChat = null;
 
   private JToolBar initToolbar() {
 //    if (ENABLE_UNIFIED_TOOLBAR) {
@@ -2683,6 +2779,44 @@ public class SikulixIDE extends JFrame {
       Settings.Highlight = prefs.getPrefMoreHighlight();
     }
   }
+  
+  //TODO: Jian button Chat
+  class ButtonChat extends ButtonOnToolbar implements ActionListener {
+
+	    private Thread thread = null;
+
+	    ButtonChat() {
+	      super();
+
+	      URL imageURL = SikulixIDE.class.getResource("/icons/run_big_green.png");
+	      setIcon(new ImageIcon(imageURL));
+	      initTooltip();
+	      addActionListener(this);
+	      setText(_I("btnChatLabel"));
+	      //setMaximumSize(new Dimension(45,45));
+	    }
+
+	    private void initTooltip() {
+//	      PreferencesUser pref = PreferencesUser.get();
+//	      String strHotkey = Key.convertKeyToText(
+//	          pref.getStopHotkey(), pref.getStopHotkeyModifiers());
+//	      String stopHint = _I("btnRunStopHint", strHotkey);
+//	      setToolTipText(_I("btnRun", stopHint));
+	    }
+
+	    @Override
+	    public void actionPerformed(ActionEvent ae) {
+//	      runCurrentScript();
+	    }
+
+
+	    void doBeforeRun() {
+	      Settings.ActionLogs = prefs.getPrefMoreLogActions();
+	      Settings.DebugLogs = prefs.getPrefMoreLogDebug();
+	      Settings.InfoLogs = prefs.getPrefMoreLogInfo();
+	      Settings.Highlight = prefs.getPrefMoreHighlight();
+	    }
+	  }
 
   class ButtonRunViz extends ButtonRun {
 
@@ -2706,14 +2840,14 @@ public class SikulixIDE extends JFrame {
   private void initMessageArea() {
     messageArea = new JTabbedPane();
     messages = new EditorConsolePane();
-    chatMessages = new EditorConsolePane();
+//    chatMessages = new EditorConsolePane();
     //
-    chatArea = new JTabbedPane();
-    chatArea.addTab(_I("chatMessage"), null, chatMessages, "DoubleClick to hide/unhide");
+//    chatArea = new JTabbedPane();
+//    chatArea.addTab(_I("chatMessage"), null, chatMessages, "DoubleClick to hide/unhide");
     messageArea.addTab(_I("paneMessage"), null, messages, "DoubleClick to hide/unhide");
     if (Settings.isWindows() || Settings.isLinux()) {
       messageArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
-      chatArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+//      chatArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
     }
     messageArea.addMouseListener(new MouseListener() {
       @Override
@@ -2744,39 +2878,27 @@ public class SikulixIDE extends JFrame {
     });
     
     //
-    chatArea.addMouseListener(new MouseListener() {
-        @Override
-        public void mouseClicked(MouseEvent me) {
-          if (me.getClickCount() < 2) {
-            return;
-          }
-          toggleCollapsed();
-        }
-        //<editor-fold defaultstate="collapsed" desc="mouse events not used">
-
-        @Override
-        public void mousePressed(MouseEvent me) {
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent me) {
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent me) {
-        }
-
-        @Override
-        public void mouseExited(MouseEvent me) {
-        }
-        //</editor-fold>
-      });
+	/*
+	 * chatArea.addMouseListener(new MouseListener() {
+	 * 
+	 * @Override public void mouseClicked(MouseEvent me) { if (me.getClickCount() <
+	 * 2) { return; } toggleCollapsed(); } //<editor-fold defaultstate="collapsed"
+	 * desc="mouse events not used">
+	 * 
+	 * @Override public void mousePressed(MouseEvent me) { }
+	 * 
+	 * @Override public void mouseReleased(MouseEvent me) { }
+	 * 
+	 * @Override public void mouseEntered(MouseEvent me) { }
+	 * 
+	 * @Override public void mouseExited(MouseEvent me) { } //</editor-fold> });
+	 */
   }
 
   private JTabbedPane messageArea;
   private EditorConsolePane messages;
-  private JTabbedPane chatArea;
-  private EditorConsolePane chatMessages;
+//  private JTabbedPane chatArea;
+//  private EditorConsolePane chatMessages;
 
   void clearMessageArea() {
     messages.clear();
