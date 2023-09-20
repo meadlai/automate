@@ -268,6 +268,8 @@ public class SikulixIDE extends JFrame {
     this.initChatTabs();
     codePane.add(messageArea, BorderLayout.CENTER);
     JPanel chatPane = new JPanel(new BorderLayout(10, 10));
+    chatPane.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+    chatPane.add(chatArea, BorderLayout.NORTH);
     chatPane.add(chatTabs, BorderLayout.CENTER);
     if (prefs.getPrefMoreMessage() == PreferencesUser.VERTICAL) {
 //      mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, messageArea, codePane);
@@ -2679,10 +2681,13 @@ public class SikulixIDE extends JFrame {
     messageArea = new JTabbedPane();
     messages = new EditorConsolePane();
     chatMessages = new EditorConsolePane();
-//    messageArea.addTab(_I("paneMessage2"), null, chatMessages, "DoubleClick to hide/unhide");
+    //
+    chatArea = new JTabbedPane();
+    chatArea.addTab(_I("chatMessage"), null, chatMessages, "DoubleClick to hide/unhide");
     messageArea.addTab(_I("paneMessage"), null, messages, "DoubleClick to hide/unhide");
     if (Settings.isWindows() || Settings.isLinux()) {
       messageArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
+      chatArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
     }
     messageArea.addMouseListener(new MouseListener() {
       @Override
@@ -2711,11 +2716,40 @@ public class SikulixIDE extends JFrame {
       }
       //</editor-fold>
     });
+    
+    //
+    chatArea.addMouseListener(new MouseListener() {
+        @Override
+        public void mouseClicked(MouseEvent me) {
+          if (me.getClickCount() < 2) {
+            return;
+          }
+          toggleCollapsed();
+        }
+        //<editor-fold defaultstate="collapsed" desc="mouse events not used">
+
+        @Override
+        public void mousePressed(MouseEvent me) {
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent me) {
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent me) {
+        }
+
+        @Override
+        public void mouseExited(MouseEvent me) {
+        }
+        //</editor-fold>
+      });
   }
 
   private JTabbedPane messageArea;
   private EditorConsolePane messages;
-  
+  private JTabbedPane chatArea;
   private EditorConsolePane chatMessages;
 
   void clearMessageArea() {
