@@ -19,6 +19,9 @@ import org.sikuli.util.EventSubject;
 import org.sikuli.util.OverlayCapturePrompt;
 import org.sikuli.util.SikulixFileChooser;
 
+import com.azure.ai.openai.models.ChatMessage;
+import com.ssc.tortoise.automate.ai.ChatTortoise;
+
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultEditorKit;
@@ -784,6 +787,7 @@ public class SikulixIDE extends JFrame {
     String defaultExtension = runner.getDefaultExtension();
     File tempFile = FileManager.createTempFile(defaultExtension, new File(RunTime.get().fpBaseTempPath,
         "SikulixIDETempTab" + editorPane.getID()).getAbsolutePath());
+    System.out.println("Input EditPane absolutepath: " + tempFile.getAbsolutePath());
     if (null == tempFile) {
       //TODO newTabEmpty: temp problem: how should caller react?
       return false;
@@ -797,48 +801,54 @@ public class SikulixIDE extends JFrame {
 //    chatTabs.setSelectedIndex(0);
     return true;
   }
-  
-  
+  EditorPane chatEditorPane;
   boolean newChatTabEmpty(int index) {
-	    EditorPane editorPane = makeTab(-1);
-	    editorPane.init(null);
-	    editorPane.setTemp(true);
-	    editorPane.setIsBundle();
-	    IScriptRunner runner = editorPane.getRunner();
+	  Debug.log(3, "test !!!!!!!!!!!");
+//	    EditorPane editorPane = makeTab(-1);
+	  chatEditorPane = makeTab(-1);
+	  chatEditorPane.init(null);
+	  chatEditorPane.setTemp(true);
+	  chatEditorPane.setIsBundle();
+	    IScriptRunner runner = chatEditorPane.getRunner();
 	    String defaultExtension = runner.getDefaultExtension();
 	    File tempFile = FileManager.createTempFile(defaultExtension, new File(RunTime.get().fpBaseTempPath,
-	        "SikulixIDETempChatTab" + editorPane.getID()).getAbsolutePath());
+	        "SikulixIDETempChatTab" + chatEditorPane.getID()).getAbsolutePath());
+	    Debug.log(3, "Chat Input EditPane absolutepath: %s", tempFile.getAbsolutePath());
+//	    System.out.println("Chat Input EditPane absolutepath: " + tempFile.getAbsolutePath());
 	    if (null == tempFile) {
 	      //TODO newTabEmpty: temp problem: how should caller react?
 	      return false;
 	    }
-	    editorPane.setFiles(tempFile);
-	    editorPane.updateDocumentListeners("empty tab");
+	    chatEditorPane.setFiles(tempFile);
+	    chatEditorPane.updateDocumentListeners("empty tab");
 	    
 	    
-	    chatTabs.addTab(_I("CHAT"), editorPane.getScrollPane(), 0);
+	    chatTabs.addTab(_I("CHAT"), chatEditorPane.getScrollPane(), 0);
 	    chatTabs.setSelectedIndex(0);
 	    return true;
   }
-  
+  EditorPane chatConvEditorPane;
   boolean newChatConvTabEmpty(int index) {
-	    EditorPane editorPane = makeTab(-1);
-	    editorPane.init(null);
-	    editorPane.setTemp(true);
-	    editorPane.setIsBundle();
-	    IScriptRunner runner = editorPane.getRunner();
+//	    EditorPane editorPane = makeTab(-1);
+	  chatConvEditorPane = makeTab(-1);
+	  chatConvEditorPane.init(null);
+	  chatConvEditorPane.setTemp(true);
+	  chatConvEditorPane.setIsBundle();
+	    IScriptRunner runner = chatConvEditorPane.getRunner();
 	    String defaultExtension = runner.getDefaultExtension();
 	    File tempFile = FileManager.createTempFile(defaultExtension, new File(RunTime.get().fpBaseTempPath,
-	        "SikulixIDETempChatConvTab" + editorPane.getID()).getAbsolutePath());
+	        "SikulixIDETempChatConvTab" + chatConvEditorPane.getID()).getAbsolutePath());
+	    Debug.log(3, "Chat Conversation Pane absolutepath: %s", tempFile.getAbsolutePath());
+//	    System.out.println("Chat Conversation Pane absolutepath: " + tempFile.getAbsolutePath());
 	    if (null == tempFile) {
 	      //TODO newTabEmpty: temp problem: how should caller react?
 	      return false;
 	    }
-	    editorPane.setFiles(tempFile);
-	    editorPane.updateDocumentListeners("empty tab");
+	    chatConvEditorPane.setFiles(tempFile);
+	    chatConvEditorPane.updateDocumentListeners("empty tab");
 	    
 	    
-	    chatConvTabs.addTab(_I("Chat Conversaction"), editorPane.getScrollPane(), 0);
+	    chatConvTabs.addTab(_I("Chat Conversaction"), chatConvEditorPane.getScrollPane(), 0);
 	    chatConvTabs.setSelectedIndex(0);
 	    return true;
 }
@@ -2807,6 +2817,25 @@ public class SikulixIDE extends JFrame {
 	    @Override
 	    public void actionPerformed(ActionEvent ae) {
 //	      runCurrentScript();
+	    	runChat();
+	    }
+	    
+	    void runChat() {
+	    	//TODO: Jian
+//	    	String currentChatMsg = ((EditorPane)chatTabs.getTabComponentAt(0)).getText();
+	    	String currentChatMsg = chatEditorPane.getText();
+	    	
+	    	ChatMessage msgAns = ChatTortoise.getSingleton().chat(currentChatMsg);
+	    	String currentChatConversactionMsg = chatConvEditorPane.getText();
+	    	StringBuffer strBuffer = new StringBuffer();
+	    	strBuffer.append(currentChatConversactionMsg)
+//	    	.append("/r/n")
+	    	.append(currentChatMsg)
+//	    	.append("/r/n")
+	    	.append(msgAns.getContent());
+	    	chatEditorPane.setText("");
+	    	chatConvEditorPane.setText(strBuffer.toString());
+	    	Debug.log(3, currentChatMsg);
 	    }
 
 
