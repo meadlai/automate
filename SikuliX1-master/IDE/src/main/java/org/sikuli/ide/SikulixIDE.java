@@ -273,7 +273,7 @@ public class SikulixIDE extends JFrame {
 		mainPane = null;
 		if (messageArea != null) {
 			//
-			messageArea.addTab("AI Chat", this.chatArea);
+//			messageArea.addTab("AI Chat", this.chatArea);
 			if (prefs.getPrefMoreMessage() == PreferencesUser.VERTICAL) {
 //        		mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, codePane, messageArea);
 				mainPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, messageArea, codePane);
@@ -824,6 +824,21 @@ public class SikulixIDE extends JFrame {
 			}
 			showThumbs = !PreferencesUser.get().getPrefMorePlainText();
 			pane = new EditorPane(this);
+			// TODO: Jian
+			
+			  pane.addFocusListener(new FocusListener() {
+			  
+			  @Override public void focusGained(FocusEvent e) {
+			  SikulixIDE.sikulixIDE.getActiveContext().pane = pane;
+			  System.out.println("orig edit pane focusGained"); }
+			  
+			  @Override public void focusLost(FocusEvent e) { //
+//			  SikulixIDE.sikulixIDE.getActiveContext().pane = //
+//			  SikulixIDE.sikulixIDE.getActiveContext().getTabs(); // recover it
+			  System.out.println("orig edit pane focusLost"); }
+			  
+			  });
+			 
 			contexts.add(pos, this);
 			tabs.addNewTab(name, pane.getScrollPane(), pos);
 			tabs.setSelectedIndex(pos);
@@ -3145,6 +3160,7 @@ public class SikulixIDE extends JFrame {
 	private void initMessageArea() {
 		messages.init(SHOULD_WRAP_LINE);
 		messageArea = new JTabbedPane();
+		messageArea.addTab("AI Chat", this.chatArea);
 		messageArea.addTab(_I("paneMessage"), null, messages, "DoubleClick to hide/unhide");
 		if (Settings.isWindows() || Settings.isLinux()) {
 			messageArea.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
