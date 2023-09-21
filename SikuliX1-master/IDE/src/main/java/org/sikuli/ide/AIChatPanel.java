@@ -35,10 +35,10 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 	private EditorPane chatInputBox = new EditorPane();
 	private JPanel chatPanel = new JPanel();
 	private JButton btnSend = new ButtonChatSend();
-	private JButton btnAccept = new JButton("Accept");
+	private JButton btnAccept = new ButtonAcceptAI();
 	private GridBagLayout layout = new GridBagLayout();
 	private GridBagConstraints c = new GridBagConstraints();
-
+	private static String aiRes = "";
 	public static String newline = System.getProperty("line.separator");
 
 	public AIChatPanel() {
@@ -177,7 +177,7 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 //	      setIcon(new ImageIcon(imageURL));
 			initTooltip();
 			addActionListener(this);
-			setText("Send");
+			setText("Send to AI Chat");
 			// setMaximumSize(new Dimension(45,45));
 		}
 
@@ -201,7 +201,7 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 
 			error("Input is: " + currentChatMsg);
 			ChatMessage msgAns = ChatTortoise.getSingleton().chat(currentChatMsg);
-			String aiRes = "";
+
 			error("Output is: " + msgAns.getContent());
 			if (msgAns != null && msgAns.getContent() != null) {
 				aiRes = msgAns.getContent().replace("<code-line>", "").replace("</code-line>", "");
@@ -209,11 +209,74 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 
 			String currentChatConversactionMsg = chatHistory.getText();
 			StringBuffer strBuffer = new StringBuffer();
-			strBuffer.append(currentChatConversactionMsg).append(newline).append(currentChatMsg).append(newline)
-					.append(aiRes);
+			strBuffer.append(currentChatConversactionMsg);
+			if(currentChatConversactionMsg !=null && !currentChatConversactionMsg.isEmpty()) {
+				strBuffer.append(newline);
+			}
+			strBuffer.append(currentChatMsg).append(newline).append(aiRes);
 			chatInputBox.setText("");
 			chatHistory.setText(strBuffer.toString());
 			Debug.log(3, currentChatMsg);
+		}
+
+//	    void doBeforeRun() {
+//	      Settings.ActionLogs = prefs.getPrefMoreLogActions();
+//	      Settings.DebugLogs = prefs.getPrefMoreLogDebug();
+//	      Settings.InfoLogs = prefs.getPrefMoreLogInfo();
+//	      Settings.Highlight = prefs.getPrefMoreHighlight();
+//	    }
+	}
+	
+	
+	class ButtonAcceptAI extends JButton implements ActionListener {
+
+		private Thread thread = null;
+
+		ButtonAcceptAI() {
+			super();
+
+//	      URL imageURL = SikulixIDE.class.getResource("/icons/run_big_green.png");
+//	      setIcon(new ImageIcon(imageURL));
+			initTooltip();
+			addActionListener(this);
+			setText("Accept AI command");
+			// setMaximumSize(new Dimension(45,45));
+		}
+
+		private void initTooltip() {
+//	      PreferencesUser pref = PreferencesUser.get();
+//	      String strHotkey = Key.convertKeyToText(
+//	          pref.getStopHotkey(), pref.getStopHotkeyModifiers());
+//	      String stopHint = _I("btnRunStopHint", strHotkey);
+//	      setToolTipText(_I("btnRun", stopHint));
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent ae) {
+			acceptChatResult();
+		}
+
+		void acceptChatResult() {
+//	    	String currentChatMsg = ((EditorPane)chatTabs.getTabComponentAt(0)).getText();
+			/*
+			 * String currentChatMsg = getChatInputString(); //
+			 * 
+			 * error("Input is: " + currentChatMsg); ChatMessage msgAns =
+			 * ChatTortoise.getSingleton().chat(currentChatMsg);
+			 * 
+			 * error("Output is: " + msgAns.getContent()); if (msgAns != null &&
+			 * msgAns.getContent() != null) { aiRes =
+			 * msgAns.getContent().replace("<code-line>", "").replace("</code-line>", ""); }
+			 * 
+			 * String currentChatConversactionMsg = chatHistory.getText(); StringBuffer
+			 * strBuffer = new StringBuffer();
+			 * strBuffer.append(currentChatConversactionMsg).append(newline).append(
+			 * currentChatMsg).append(newline) .append(aiRes); chatInputBox.setText("");
+			 * chatHistory.setText(strBuffer.toString()); Debug.log(3, currentChatMsg);
+			 */
+			String history = getActiveEditPanel().getText();
+			history = history + newline + aiRes;
+			getActiveEditPanel().setText(history);
 		}
 
 //	    void doBeforeRun() {
