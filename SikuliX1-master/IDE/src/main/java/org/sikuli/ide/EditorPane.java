@@ -28,6 +28,8 @@ import javax.swing.event.MouseInputAdapter;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.datatransfer.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -74,6 +76,22 @@ public class EditorPane extends JTextPane {
         super.mouseClicked(e);
       }
     });
+    this.addFocusListener(new FocusListener() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				SikulixIDE.sikulixIDE.getActiveContext().pane = AIChatPanel.getActiveEditPanel();
+				System.out.println("focusGained");
+				log("focusGained");
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				// recover it
+				System.out.println("focusLost");
+				log("focusLost");
+			}
+
+		});
     scrollPane = new JScrollPane(this);
     scrollPane.setRowHeaderView(new EditorLineNumberView(this));
     editorPaneID = new Date().getTime();
