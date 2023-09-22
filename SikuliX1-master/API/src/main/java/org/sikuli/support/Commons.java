@@ -496,11 +496,11 @@ public class Commons {
   }
 
   public static String getSXVersionIDE() {
-    return "SikulixIDE-" + sxVersion;
+    return "Tortoise Automate-0.0.1";
   }
 
   public static String getSXVersionAPI() {
-    return "SikulixAPI-" + sxVersion;
+    return "Tortoise Automate-0.0.1";
   }
 
   public static String getSXVersionLong() {
