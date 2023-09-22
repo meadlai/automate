@@ -58,7 +58,7 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 	public AIChatPanel() {
 //		super(layout);
 		this.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		this.setTopComponent(chatHistory);
+		this.setTopComponent(chatHistory.getScrollPane());
 		this.setBottomComponent(buildChatComponent());
 //		chatPanel.add(chatInputBox);
 //		chatPanel.add(btnSend);
