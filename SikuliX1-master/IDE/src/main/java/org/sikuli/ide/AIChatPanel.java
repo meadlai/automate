@@ -1,5 +1,6 @@
 package org.sikuli.ide;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -12,7 +13,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -23,6 +33,7 @@ import javax.swing.text.Element;
 import javax.swing.text.StyleConstants;
 
 import org.sikuli.basics.Debug;
+import org.sikuli.script.ImagePath;
 
 import com.azure.ai.openai.models.ChatMessage;
 import com.ssc.tortoise.automate.ai.ChatTortoise;
@@ -39,8 +50,11 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 	private GridBagLayout layout = new GridBagLayout();
 	private GridBagConstraints c = new GridBagConstraints();
 	private static String aiRes = "";
+	private static StringBuffer conversation = new StringBuffer();
 	public static String newline = System.getProperty("line.separator");
-
+	private static Map<String, String> imageNames = Collections.synchronizedMap(new HashMap<String, String>());
+	String tmpStr = "";
+	String currentChatMsg = "";
 	public AIChatPanel() {
 //		super(layout);
 		this.setOrientation(JSplitPane.VERTICAL_SPLIT);
@@ -50,6 +64,7 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 //		chatPanel.add(btnSend);
 //		chatPanel.add(btnAccept);
 //		chatPanel.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
+		chatInputBox.setAutoscrolls(true);
 		chatInputBox.addFocusListener(new FocusListener() {
 			@Override
 			public void focusGained(FocusEvent e) {
@@ -87,18 +102,61 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 			}
 
 		});
-
+		
+		chatHistory.setContentType("text/html");
+		String userIcon = SikulixIDE.class.getResource("/icons/chat/user_icon.png").getFile();
+		String botIcon = SikulixIDE.class.getResource("/icons/chat/bot_icon.png").getFile();
+//		conversation.append("<html><head><meta charset=\"utf-8\"/> <title>title</title> <body> Hello CHAT!! <h2>HTML Image Example</h2> <div style=\"text-align: left\"><img  align=\"left\" src=\"https://img0.baidu.com/it/u=1749989396,456916184&fm=253&fmt=auto&app=138&f=PNG?w=500&h=500\" width=\"20\" height=\"20\"/> Hi </div><br><div style=\"text-align: right\"><img style=\"text-align: right\" align=\"right\" src=\"https://img.88icon.com/download/jpg/20200829/56a8d4bda0c3b22de3bfbffd5ff43adc_512_401.jpg%2188bg\" width=\"20\" height=\"20\"/>  Robot here   </div>");
+		conversation.append(" <div style=\"text-align: right\"> Hi <img  align=\"left\" src=\"file://" + userIcon + "\"/> </div><br><div style=\"text-align: left\"><img style=\"text-align: right\" align=\"right\" src=\"file://" + botIcon + "\"/>  Robot here   </div>");
+		/*
+		 * chatHistory.setText(""" <html><head><meta charset="utf-8"/>
+		 * <title>title</title> <body> Hello CHAT!! <h2>HTML Image Example</h2> <div
+		 * style="text-align: left"><img align="left" src=
+		 * "https://img0.baidu.com/it/u=1749989396,456916184&fm=253&fmt=auto&app=138&f=PNG?w=500&h=500"
+		 * width="20" height="20"/> Hi </div> <br> <div style="text-align: right"><img
+		 * style="text-align: right" align="right" src=
+		 * "https://img.88icon.com/download/jpg/20200829/56a8d4bda0c3b22de3bfbffd5ff43adc_512_401.jpg%2188bg"
+		 * width="20" height="20"/> Robot here </div> </body> </html> """ );
+		 */
+//		chatHistory.setText(conversation.toString() + "</body></html>");
+		chatHistory.setText(conversation.toString());
 	}
 
 	JSplitPane buildChatComponent() {
+//		chatPanel.add(chatInputBox, BorderLayout.NORTH);
 		chatPanel.add(btnSend);
 		chatPanel.add(btnAccept);
 		return new JSplitPane(JSplitPane.VERTICAL_SPLIT, chatInputBox, chatPanel);
-
 	}
+
+	
+	private JButton initUserIcon() {
+		JButton btnUserIcon = new JButton();
+		 URL imageURL = SikulixIDE.class.getResource("/icons/chat/user_icon.png");
+		 btnUserIcon.setIcon(new ImageIcon(imageURL));
+		 btnUserIcon.setText("");
+		return  btnUserIcon;
+	};
 	
 	public String getChatInputString() {
+		//Adding user icon as component
+//		chatInputBox.add(initUserIcon());
+		
 		Document doc = this.chatInputBox.getDocument();
+		int count = doc.getDefaultRootElement().getElementCount();
+		StringBuilder sb = new StringBuilder();
+//		sb.append();
+//		sb.append("User Input: ");
+		for(int i = 0; i<count ; i++) {
+			Element item = doc.getDefaultRootElement().getElement(i);
+			String result = getLineTextFrom(item);
+			sb.append(result);
+		}
+		return sb.toString();
+	}
+	
+	public String getChatHistoryString() {
+		Document doc = this.chatHistory.getDocument();
 		int count = doc.getDefaultRootElement().getElementCount();
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0; i<count ; i++) {
@@ -195,27 +253,51 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 		}
 
 		void runChat() {
+			fileWalk();
 //	    	String currentChatMsg = ((EditorPane)chatTabs.getTabComponentAt(0)).getText();
-			String currentChatMsg = getChatInputString();
+			currentChatMsg = getChatInputString();
 			//
 
 			error("Input is: " + currentChatMsg);
 			ChatMessage msgAns = ChatTortoise.getSingleton().chat(currentChatMsg);
 
-			error("Output is: " + msgAns.getContent());
+//			error("Output is: " + msgAns.getContent());
 			if (msgAns != null && msgAns.getContent() != null) {
-				aiRes = msgAns.getContent().replace("<code-line>", "").replace("</code-line>", "");
+				aiRes =  msgAns.getContent().replace("<code-line>", "").replace("</code-line>", "");
 			}
 
-			String currentChatConversactionMsg = chatHistory.getText();
-			StringBuffer strBuffer = new StringBuffer();
-			strBuffer.append(currentChatConversactionMsg);
-			if(currentChatConversactionMsg !=null && !currentChatConversactionMsg.isEmpty()) {
-				strBuffer.append(newline);
-			}
-			strBuffer.append(currentChatMsg).append(newline).append(aiRes);
+//			String currentChatConversactionMsg = getChatHistoryString();
+			
+//			StringBuffer strBuffer = new StringBuffer();
+//			strBuffer.append(currentChatConversactionMsg);
+//			if(currentChatConversactionMsg !=null && !currentChatConversactionMsg.isEmpty()) {
+//				strBuffer.append(newline);
+//			}
+//			aiRes = "doubleClick(\"chrome\")\r\n"
+//					+ "wait(1)";
+			String userIcon = SikulixIDE.class.getResource("/icons/chat/user_icon.png").getFile();
+			String botIcon = SikulixIDE.class.getResource("/icons/chat/bot_icon.png").getFile();
+			
+			
+			imageNames.forEach((k,v) -> {tmpStr = aiRes.replace(k, "<img align=\"left\" src=\"file:///" + v +"\"  />");
+				currentChatMsg = currentChatMsg.replace(k, "<img align=\"right\" src=\"file:///" + v +"\"  />").replace("\"", "");
+			});
+			conversation.append("<div style=\"text-align: right\">")
+			.append(currentChatMsg)
+			.append("<img align=\"left\" src=\"file://" + userIcon +"\"  />")
+			.append("</div><br/>")
+			.append("<div style=\"text-align: left\"><img style=\"text-align: right\" align=\"right\" src=\"file://" + botIcon +"\" />")
+//			.append(newline).
+			;
+			
+			
+			conversation.append(tmpStr.replace("\n", "<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"))
+			.append("</div>");
 			chatInputBox.setText("");
-			chatHistory.setText(strBuffer.toString());
+//			chatHistory.setText(strBuffer.toString());
+//			chatHistory.setContentType("text/html");
+			chatHistory.setText(conversation.toString() + "</body></html>");
+			
 			Debug.log(3, currentChatMsg);
 		}
 
@@ -226,8 +308,21 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 //	      Settings.Highlight = prefs.getPrefMoreHighlight();
 //	    }
 	}
+	void fileWalk() {
+		var dirName = 	new ImagePath().getBundlePath();;
+
+	    try (Stream<Path> paths = Files.walk(Paths.get(dirName), 2)) {
+	        paths.filter(Files::isRegularFile)
+	                .forEach((f) -> {imageNames.put(f.getFileName().toString().replace(".png", ""), f.toAbsolutePath().toString());}
+//	                		System.out::println
+	                		);
+	    } catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
-	
+
 	class ButtonAcceptAI extends JButton implements ActionListener {
 
 		private Thread thread = null;
@@ -277,6 +372,8 @@ public class AIChatPanel extends JSplitPane implements Runnable {
 			String history = getActiveEditPanel().getText();
 			history = history + newline + aiRes;
 			getActiveEditPanel().setText(history);
+			SikulixIDE.sikulixIDE.getActiveContext().pane = AIChatPanel.getActiveEditPanel();
+			getActiveEditPanel().context.reparse();
 		}
 
 //	    void doBeforeRun() {

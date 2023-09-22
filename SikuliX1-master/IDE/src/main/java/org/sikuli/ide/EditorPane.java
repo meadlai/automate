@@ -641,10 +641,10 @@ public class EditorPane extends JTextPane {
   }
 
   private int parseRange(int start, int end) {
-    if (!context.getShowThumbs()) {
-      // do not show any thumbnails
-      return end;
-    }
+//    if (!context.getShowThumbs()) {
+//      // do not show any thumbnails
+//      return end;
+//    }
     try {
       end = parseLine(start, end, patCaptureBtn);
       end = parseLine(start, end, patPatternStr);

@@ -327,7 +327,7 @@ public class SikulixIDE extends JFrame {
 
 		createEmptyScriptContext();
 		if (messages != null) {
-			messages.initRedirect();
+//			messages.initRedirect();
 		}
 		Debug.log("IDE: Putting all together - Restore last Session");
 		restoreSession();
@@ -829,6 +829,7 @@ public class SikulixIDE extends JFrame {
 			  pane.addFocusListener(new FocusListener() {
 			  
 			  @Override public void focusGained(FocusEvent e) {
+				  
 			  SikulixIDE.sikulixIDE.getActiveContext().pane = pane;
 			  System.out.println("orig edit pane focusGained"); }
 			  
@@ -1640,7 +1641,7 @@ public class SikulixIDE extends JFrame {
 			initRunMenu();
 			initViewMenu();
 			initToolMenu();
-			initHelpMenu();
+//			initHelpMenu();
 		} catch (NoSuchMethodException e) {
 			log("Problem when initializing menues\nError: %s", e.getMessage());
 		}
@@ -1650,7 +1651,7 @@ public class SikulixIDE extends JFrame {
 		_menuBar.add(_runMenu);
 		_menuBar.add(_viewMenu);
 		_menuBar.add(_toolMenu);
-		_menuBar.add(_helpMenu);
+//		_menuBar.add(_helpMenu);
 		frame.setJMenuBar(_menuBar);
 	}
 
@@ -1720,11 +1721,11 @@ public class SikulixIDE extends JFrame {
 		int scMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 		_fileMenu.setMnemonic(java.awt.event.KeyEvent.VK_F);
 
-		if (IDEDesktopSupport.showAbout) {
-			_fileMenu.add(createMenuItem("About SikuliX", KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, scMask),
-					new FileAction(FileAction.ABOUT)));
-			_fileMenu.addSeparator();
-		}
+//		if (IDEDesktopSupport.showAbout) {
+//			_fileMenu.add(createMenuItem("About SikuliX", KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, scMask),
+//					new FileAction(FileAction.ABOUT)));
+//			_fileMenu.addSeparator();
+//		}
 
 		_fileMenu.add(createMenuItem(_I("menuFileNew"), KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, scMask),
 				new FileAction(FileAction.NEW)));
